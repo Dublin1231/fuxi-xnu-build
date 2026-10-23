@@ -248,6 +248,9 @@ def kernel():
     if link_rc:raise RuntimeError('Touch kernel executable link/prelink failed')
     link_inputs=raw_kernel.parent/'mach.development.bcm2837.link/mach.development.bcm2837.linkarchives'
     if str(archive) not in link_inputs.read_text():raise RuntimeError('Actual linker inputs omit touch archive')
+    diagnostics=MachO(raw_kernel.read_bytes()).initializer_diagnostics()
+    save('touch-initializers.json',diagnostics)
+    print('TOUCH_INITIALIZERS '+json.dumps(diagnostics),flush=True)
     audit=audit_kernel(raw_kernel.read_bytes(),(core/'out/fuxi/kernel/kernel.macho').read_bytes(),
         [p.read_bytes() for p in objects],baseline_undefined)
     audit['archive_sha256']=hashlib.sha256(archive.read_bytes()).hexdigest()

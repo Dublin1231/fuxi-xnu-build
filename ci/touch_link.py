@@ -59,6 +59,13 @@ class MachO:
                 return self.slice(s['offset']+address-s['address'],length)
         raise ValueError('Symbol outside file-backed sections')
 
+    def initializer_diagnostics(self):
+        return dict(constructor_sections=[dict(s,targets=[hex(v) for v in
+            [self.unpack('<Q',s['offset']+i)[0] for i in range(0,s['size'],8)]])
+            for s in self.sections if s['flags']&0xff==9],
+            touch_symbols=[dict(s,value=hex(s['value'])) for s in self.symbols if 'Fuxi' in s['name']],
+            gate_symbols=[dict(s,value=hex(s['value'])) for s in self.symbols if s['name']=='_fuxi_st_board_start'])
+
 def audit_kernel(kernel,prelinked,objects,baseline_undefined):
     image=MachO(kernel);carrier=MachO(prelinked)
     if image.kind!=2 or carrier.kind!=2:raise ValueError('Expected executable kernel images, not relocatable link')
@@ -75,8 +82,11 @@ def audit_kernel(kernel,prelinked,objects,baseline_undefined):
     expected=['FuxiSTWorkLoop.cpp','FuxiSharedRegistry.cpp'];initializers=[]
     targets=image.constructor_targets()
     for filename in expected:
-        matches=[s for s in image.symbols if 'GLOBAL__sub_I_' in s['name'] and s['name'].endswith(filename)]
-        if len(matches)!=1 or matches[0]['value'] not in targets:
+        # LLVM can append a uniqueness suffix to local initializer names.
+        # The actual pointer-table membership, not a filename suffix, is proof.
+        matches=[s for s in image.symbols if 'GLOBAL__sub_I_' in s['name'] and filename in s['name']
+            and not s['kind']&0xe0 and s['kind']&0xe==14 and s['value'] in targets]
+        if len(matches)!=1:
             raise ValueError('Class constructor not retained in kernel initializer table: '+filename)
         initializers.append(dict(symbol=matches[0]['name'],address=hex(matches[0]['value'])))
     gates=[s for s in image.symbols if s['name']=='_fuxi_st_board_start']
