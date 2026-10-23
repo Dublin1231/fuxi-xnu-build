@@ -28,6 +28,8 @@ This diagnostic build does not enable UFS and cannot demonstrate Apple userspace
 
 The first run failed at the inherited legacy-display link reference, the incompatible boot-progress configuration, and receipt macro recognition. Clang receipts can serialize `-DKERNEL` as `-D`, `KERNEL`; the parser now recognizes both exact forms while retaining all compiler arguments and still rejecting non-kernel receipts.
 
+Run 39976021256 compiled both touch C++ adapters into ARM64/iOS objects using the real XNU receipt. Its baseline still failed because the upstream configuration enabled source crypto without enabling archive builders. The CI overlay now enables actual archive construction for corecrypto (plain and namespaced), ArmDTPlatform, ArmCpu, NativeAES, AES bindings and pthread. It excludes builders for disabled UFS, dashboard and legacy display, and removes the unused legacy stub link input. It does not substitute dummy crypto or mark a failed baseline successful. Builder order and feature assumptions are checked against the pinned board before modification.
+
 The remaining provider work requires qualified command DB data and an ownership/handoff contract at XNU takeover. Android runtime observations alone do not establish post-reboot resource ownership. Unknown shared-resource state must keep the provider unavailable.
 
 Windows source checks: `python -m unittest discover -s ci -p 'test_*.py' -v`. Actual macOS execution and target compilation must be assessed from the Actions logs, not these planning tests.

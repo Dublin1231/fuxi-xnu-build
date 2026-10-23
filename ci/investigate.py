@@ -10,6 +10,7 @@ import shutil
 import struct
 import subprocess
 import sys
+import tomllib
 
 ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/'build/cloud'
@@ -97,12 +98,43 @@ def checkout(name):
     if actual!=pin:raise ValueError('Commit pin mismatch')
     return directory
 
+CI_ARCHIVES=[
+    'build-corecrypto-14.py',
+    'build-corecrypto-14.py --namespace',
+    'build-arm-driver.py ArmDTPlatform',
+    'build-arm-driver.py ArmCpu',
+    'build-arm-driver.py NativeAES',
+    'build-native-aes-bindings.py',
+    'build-libpthread-kernel.py',
+]
+EXCLUDED_ARCHIVES=['audit-storage-interface.py','build-arm-driver.py NativeUfs',
+    'build-boot-progress.py','build-legacy-stub.py']
+
 def prepare_ci_inputs(core,device):
-    """Disable unavailable dashboard; guard optional display call, no fake stub."""
+    """Build enabled source dependencies; omit disabled storage/display components."""
     original=device/'configs/fuxi_defconfig'
     config=original.read_text()
     if config.count('CONFIG_XNU_BOOT_PROGRESS=y')!=1:raise ValueError('Unexpected base config')
+    for feature in ['SOURCE_CORECRYPTO14','SOURCE_PTHREAD','ARM_DT_PLATFORM','ARMCPU','NATIVE_AES']:
+        if config.splitlines().count('CONFIG_XNU_'+feature+'=y')!=1:
+            raise ValueError('Archive plan requires enabled '+feature)
+    if config.splitlines().count('CONFIG_XNU_NATIVE_UFS=n')!=1:raise ValueError('CI requires disabled UFS')
+    if re.search(r'^CONFIG_XNU_BUILD_ARCHIVES=',config,re.M):raise ValueError('Unexpected archive gate')
+    legacy='CONFIG_XNU_EXTRA_LD_ARCHIVES="{tree}/build/legacy-stub/libLegacyStub.a"'
+    if config.splitlines().count(legacy)!=1:raise ValueError('Unexpected extra archives')
+    if re.search(r'^CONFIG_XNU_NATIVE_LEGACY_DISPLAY=y$',config,re.M):raise ValueError('Legacy display enabled')
+    board=device/'board.toml';board_text=board.read_text()
+    entries=tomllib.loads(board_text)['kernel']['archives']
+    if len(entries)!=len(set(entries)) or set(entries)!=set(CI_ARCHIVES+EXCLUDED_ARCHIVES):
+        raise ValueError('Unexpected upstream archive plan')
+    if [e for e in entries if e in CI_ARCHIVES]!=CI_ARCHIVES:raise ValueError('Unexpected archive order')
+    board_overlay,count=re.subn(r'^archives = \[\n.*?^\]',
+        'archives = [\n'+''.join('  '+json.dumps(e)+',\n' for e in CI_ARCHIVES)+']',board_text,flags=re.M|re.S)
+    if count!=1 or tomllib.loads(board_overlay)['kernel']['archives']!=CI_ARCHIVES:
+        raise ValueError('Archive overlay did not match')
     config=config.replace('CONFIG_XNU_BOOT_PROGRESS=y','CONFIG_XNU_BOOT_PROGRESS=n')
+    config=config.replace(legacy,'CONFIG_XNU_EXTRA_LD_ARCHIVES=""')
+    config+='\nCONFIG_XNU_BUILD_ARCHIVES=y\n'
     target=device/'configs/fuxi_ci_defconfig';target.write_text(config)
     patch=core/'patches/xnu/offline-component-load-probes.patch'
     text=patch.read_text();before=hashlib.sha256(patch.read_bytes()).hexdigest()
@@ -126,10 +158,15 @@ def prepare_ci_inputs(core,device):
             else:break
         lines[index]=f'@@ -{match[1]},{old} +{match[2]},{new} @@{match[3]}\n'
     patch.write_text(''.join(lines))
+    board.write_text(board_overlay)
     changes=dict(configuration='fuxi_ci_defconfig',boot_progress=False,
         reason='Console-only CI lacks audited UFS/owner-root dashboard dependencies',
         display_patch_before=before,display_patch_after=hashlib.sha256(patch.read_bytes()).hexdigest(),
         display_call='Guarded by existing XNU_NATIVE_LEGACY_DISPLAY flag; no stub supplied',
+        build_archives=True,archive_builders=CI_ARCHIVES,excluded_disabled_components=EXCLUDED_ARCHIVES,
+        board_before=hashlib.sha256(board_text.encode()).hexdigest(),
+        board_after=hashlib.sha256(board_overlay.encode()).hexdigest(),
+        extra_link_archives=[],crypto_replaced_with_stub=False,
         hardware_features_added=False)
     return changes
 
