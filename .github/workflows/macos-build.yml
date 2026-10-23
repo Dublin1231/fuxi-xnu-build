@@ -1,0 +1,37 @@
+name: macOS XNU build investigation
+on:
+  workflow_dispatch:
+    inputs:
+      build_kernel:
+        description: Attempt pinned baseline XNU build and then compile touch adapters
+        type: boolean
+        default: true
+permissions:
+  contents: read
+concurrency:
+  group: fuxi-macos-investigation
+  cancel-in-progress: false
+jobs:
+  investigate:
+    runs-on: macos-26
+    timeout-minutes: 180
+    env:
+      HOMEBREW_NO_AUTO_UPDATE: '1'
+      HOMEBREW_NO_INSTALL_CLEANUP: '1'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Check environment and run host tests
+        run: python3 ci/investigate.py host
+      - name: Install kernel build dependencies
+        if: inputs.build_kernel
+        run: brew install llvm lld cmake ninja unifdef mtools dtc
+      - name: Attempt baseline kernel and real IOKit compilation
+        if: inputs.build_kernel
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 ci/investigate.py kernel
+      - name: Publish text status to job summary
+        if: always()
+        run: python3 ci/investigate.py summary

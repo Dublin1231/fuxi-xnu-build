@@ -1,0 +1,4 @@
+/build/
+/upstream/
+__pycache__/
+*.pyc
