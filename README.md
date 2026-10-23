@@ -22,7 +22,11 @@ Pinned inputs:
 | hanzi123-bilp/unixnu-fuxi | `d12c0585c7c82941c17e4af6bace12dc46953c85` |
 | apple-oss-distributions/xnu via upstream feeds | `d8b80295118ef25ac3a784134bcf95cd8e88109f` |
 
-The initial fuxi config is console-only and does not enable UFS. Building it cannot demonstrate Apple userspace or daily use. Upstream may download external build inputs on the ephemeral runner; no derived kernel/system binaries are published here.
+The CI config is derived from the pinned console-only `fuxi_defconfig`. It disables the boot-progress dashboard because that feature requires audited UFS/owner-root inputs absent from this configuration. A documented overlay guards the optional legacy-display registration call with the existing `XNU_NATIVE_LEGACY_DISPLAY` flag; it supplies no dummy implementation. Original upstream config remains unchanged, and overlay hashes are recorded in the job workspace.
+
+This diagnostic build does not enable UFS and cannot demonstrate Apple userspace or daily use. Upstream may download external build inputs on the ephemeral runner; no derived kernel/system binaries are published here.
+
+The first run failed at the inherited legacy-display link reference, the incompatible boot-progress configuration, and receipt macro recognition. Clang receipts can serialize `-DKERNEL` as `-D`, `KERNEL`; the parser now recognizes both exact forms while retaining all compiler arguments and still rejecting non-kernel receipts.
 
 The remaining provider work requires qualified command DB data and an ownership/handoff contract at XNU takeover. Android runtime observations alone do not establish post-reboot resource ownership. Unknown shared-resource state must keep the provider unavailable.
 

@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import platform
+import re
 import shutil
 import struct
 import subprocess
@@ -49,7 +50,12 @@ def rewrite_cpp(record,source,destination):
     if not isinstance(args,list) or not args or not all(isinstance(a,str) for a in args):raise ValueError('Bad compiler receipt')
     if Path(args[0]).name not in ('clang','clang++'):raise ValueError('Receipt is not a direct clang invocation')
     if args.count(record['file'])!=1 or args.count('-o')!=1 or '-c' not in args:raise ValueError('Ambiguous compile receipt')
-    if not any(a.startswith('-DKERNEL') for a in args):raise ValueError('Receipt lacks kernel compilation context')
+    # clang -MJ normalizes -DKERNEL into two arguments: -D, KERNEL.
+    definitions=set()
+    for index,arg in enumerate(args):
+        value=args[index+1] if arg=='-D' and index+1<len(args) else arg[2:] if arg.startswith('-D') else ''
+        if value:definitions.add(value.split('=',1)[0])
+    if 'KERNEL' not in definitions:raise ValueError('Receipt lacks kernel compilation context')
     command=[];i=0
     paired={'-o','-MF','-MT','-MQ','-MJ','--serialize-diagnostics','-serialize-diagnostics'}
     while i<len(args):
@@ -91,12 +97,49 @@ def checkout(name):
     if actual!=pin:raise ValueError('Commit pin mismatch')
     return directory
 
+def prepare_ci_inputs(core,device):
+    """Disable unavailable dashboard; guard optional display call, no fake stub."""
+    original=device/'configs/fuxi_defconfig'
+    config=original.read_text()
+    if config.count('CONFIG_XNU_BOOT_PROGRESS=y')!=1:raise ValueError('Unexpected base config')
+    config=config.replace('CONFIG_XNU_BOOT_PROGRESS=y','CONFIG_XNU_BOOT_PROGRESS=n')
+    target=device/'configs/fuxi_ci_defconfig';target.write_text(config)
+    patch=core/'patches/xnu/offline-component-load-probes.patch'
+    text=patch.read_text();before=hashlib.sha256(patch.read_bytes()).hexdigest()
+    start='+\tint legacy_register = 0;\n'
+    end='+\tint client_probe = 0;\n'
+    if text.count(start)!=1 or text.count(end)!=1:raise ValueError('Unexpected upstream display patch')
+    text=text.replace(start,'+#if defined(XNU_NATIVE_LEGACY_DISPLAY) && XNU_NATIVE_LEGACY_DISPLAY\n'+start)
+    text=text.replace(end,'+#endif\n'+end)
+    # Recount modified unified diff hunks while retaining their base context.
+    lines=text.splitlines(keepends=True)
+    for index,line in enumerate(lines):
+        match=re.match(r'@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@(.*)',line)
+        if not match:continue
+        old=new=0
+        for following in lines[index+1:]:
+            if following.startswith(('@@','--- a/','+++ b/','diff --git')):break
+            if following.startswith(' '):old+=1;new+=1
+            elif following.startswith('-'):old+=1
+            elif following.startswith('+'):new+=1
+            elif following.startswith('\\'):continue
+            else:break
+        lines[index]=f'@@ -{match[1]},{old} +{match[2]},{new} @@{match[3]}\n'
+    patch.write_text(''.join(lines))
+    changes=dict(configuration='fuxi_ci_defconfig',boot_progress=False,
+        reason='Console-only CI lacks audited UFS/owner-root dashboard dependencies',
+        display_patch_before=before,display_patch_after=hashlib.sha256(patch.read_bytes()).hexdigest(),
+        display_call='Guarded by existing XNU_NATIVE_LEGACY_DISPLAY flag; no stub supplied',
+        hardware_features_added=False)
+    return changes
+
 def kernel():
     core=checkout('core');device=checkout('device')
     import tomllib
     feed=tomllib.loads((core/'feeds.toml').read_text())
     if next(s['commit'] for s in feed['source'] if s['name']=='xnu')!=XNU:raise ValueError('XNU pin mismatch')
-    run([sys.executable,core/'unixnu','defconfig','fuxi_defconfig','-D',device],cwd=core)
+    save('ci-input-changes.json',prepare_ci_inputs(core,device))
+    run([sys.executable,core/'unixnu','defconfig','fuxi_ci_defconfig','-D',device],cwd=core)
     baseline=run([sys.executable,core/'unixnu','build','kernel','-D',device,'-j','2'],cwd=core,check=False)
     tree=core/'out/fuxi/tree'
     receipt=tree/'build/xnu/ios-obj/DEVELOPMENT_ARM64_BCM2837/iokit/DEVELOPMENT/IOPlatformExpert.cpo.json'
@@ -106,6 +149,8 @@ def kernel():
     save('kernel.json',report)
     if not receipt.is_file():raise RuntimeError('No actual IOKit compile receipt; see baseline diagnostics')
     record=json.loads(receipt.read_text().strip().rstrip(','))
+    save('target-cpp-receipt.json',record)
+    print('TARGET_CPP_RECEIPT '+json.dumps(record),flush=True)
     # Use original working directory and generated include paths, not a fabricated SDK.
     if not Path(record['directory']).is_dir():raise RuntimeError('Receipt working directory absent')
     for source in [NATIVE/'FuxiSTWorkLoop.cpp',NATIVE/'shared/FuxiSharedRegistry.cpp']:
