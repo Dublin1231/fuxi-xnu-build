@@ -9,7 +9,7 @@ Results distinguish:
 - Host tests on macOS.
 - Baseline upstream kernel build outcome.
 - Actual IOKit C++ compilation and ARM64/iOS object checks.
-- Touch objects linked into a kernel: **not implemented in this first investigation**.
+- Touch objects linked into an executable kernel and prelink: separately verified by the binary audit.
 - Physical RPMh/GCC/ICC provider and device validation: **not implemented**.
 
 No mock IOKit headers are used. A static archive or relocatable object is not accepted as a kernel link. This workflow has no phone/flash/partition steps, uploads no system images, and publishes only textual build status in its job summary. Native source files retain their SPDX identifiers. No personal backups, serial numbers, credentials or ROM binaries belong in this repository.
@@ -33,3 +33,5 @@ Run 39976021256 compiled both touch C++ adapters into ARM64/iOS objects using th
 The remaining provider work requires qualified command DB data and an ownership/handoff contract at XNU takeover. Android runtime observations alone do not establish post-reboot resource ownership. Unknown shared-resource state must keep the provider unavailable.
 
 Windows source checks: `python -m unittest discover -s ci -p 'test_*.py' -v`. Actual macOS execution and target compilation must be assessed from the Actions logs, not these planning tests.
+
+The next investigation also compiles the eight native C dependency files plus the pinned upstream GENI SPI implementation using a genuine XNU C compile receipt. It force-loads these and the two C++ adapters into a newly linked executable kernel, repeats prelink, and checks retained definitions, new unresolved imports, C++ constructor pointers and the constant `ST_BLOCKED` production gate in the actual binary. Host-only start and mock transport objects are excluded. Constructors can register the two helper classes; there is still no IOService matching personality or hardware provider. The earlier `NativeHidInput.fuxi.patch` depends on an independently qualified private HID device ABI and is not included or claimed as integrated here. No HID service, IRQ or hardware operation is instantiated by this build.

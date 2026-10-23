@@ -11,6 +11,7 @@ import struct
 import subprocess
 import sys
 import tomllib
+from touch_link import MachO,audit_kernel
 
 ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/'build/cloud'
@@ -181,7 +182,7 @@ def kernel():
     tree=core/'out/fuxi/tree'
     receipt=tree/'build/xnu/ios-obj/DEVELOPMENT_ARM64_BCM2837/iokit/DEVELOPMENT/IOPlatformExpert.cpo.json'
     report=dict(baseline_kernel_exit_code=baseline,compile_receipt_present=receipt.is_file(),
-        cpp_objects=[],iokit_compile_passed=False,touch_kernel_linked=False,
+        cpp_objects=[],c_objects=[],iokit_compile_passed=False,touch_kernel_linked=False,
         physical_provider_implemented=False,hardware_tested=False,device_boot_ready=False)
     save('kernel.json',report)
     if not receipt.is_file():raise RuntimeError('No actual IOKit compile receipt; see baseline diagnostics')
@@ -201,7 +202,60 @@ def kernel():
     report['iokit_compile_passed']=all(o['exit_code']==0 for o in report['cpp_objects'])
     save('kernel.json',report)
     if baseline or not report['iokit_compile_passed']:raise RuntimeError('Build/compile investigation has failures')
-    print('Baseline and C++ objects passed; touch objects NOT linked into kernel. Hardware still unavailable.')
+    c_receipt=tree/'build/xnu/ios-obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/prng_random.o.json'
+    c_record=json.loads(c_receipt.read_text().strip().rstrip(','))
+    if not c_record['file'].endswith('.c'):raise ValueError('Expected genuine C receipt')
+    save('target-c-receipt.json',c_record)
+    print('TARGET_C_RECEIPT '+json.dumps(c_record),flush=True)
+    sources=[NATIVE/p for p in ['fuxi_st.c','fuxi_st_bridge.c','fuxi_st_geni.c','board_lifecycle.c',
+        'shared/shared_resources.c','shared/shared_board_backend.c','provider/cmddb.c','provider/vrm_voltage.c']]
+    sources.append(tree/'drivers/NativeGeniSpi/GeniSpi.c')
+    objects=[OUT/'FuxiSTWorkLoop.o',OUT/'FuxiSharedRegistry.o']
+    for source in sources:
+        obj=OUT/(source.stem+'.o')
+        command=rewrite_cpp(c_record,source,obj)+['-I',str(tree/'drivers/NativeGeniSpi')]
+        save(source.stem+'-command.json',command)
+        rc=run(command,cwd=c_record['directory'],check=False)
+        entry=dict(source=str(source),source_sha256=hashlib.sha256(source.read_bytes()).hexdigest(),exit_code=rc)
+        if rc==0:entry.update(object_info(obj));objects.append(obj)
+        report['c_objects'].append(entry);save('kernel.json',report)
+    report['all_touch_objects_compiled']=all(o['exit_code']==0 for o in report['c_objects'])
+    save('kernel.json',report)
+    if not report['all_touch_objects_compiled']:raise RuntimeError('Touch C target compilation failed')
+    archive=OUT/'libFuxiTouch.a'
+    run(['xcrun','ar','rcs',archive,*objects])
+    raw_kernel=tree/'build/xnu/ios-obj/DEVELOPMENT_ARM64_BCM2837/mach.development.bcm2837.unstripped.noctf'
+    before=MachO(raw_kernel.read_bytes())
+    baseline_undefined=before.undefined()
+    definitions=set().union(*(MachO(p.read_bytes()).defined() for p in objects))
+    imports=set().union(*(MachO(p.read_bytes()).undefined() for p in objects))-definitions
+    unavailable=imports-before.defined()-{'___dso_handle'}
+    save('touch-imports.json',dict(imports=sorted(imports),unavailable_before_link=sorted(unavailable)))
+    if unavailable:raise RuntimeError('Missing real kernel imports: '+str(sorted(unavailable)))
+    config=core/'out/fuxi/.config';config_text=config.read_text()
+    empty='CONFIG_XNU_EXTRA_LD_ARCHIVES=""'
+    if config_text.splitlines().count(empty)!=1:raise ValueError('Unexpected active extra archive inputs')
+    if any(c.isspace() for c in str(archive)) or ',' in str(archive):raise ValueError('Unsafe linker path')
+    config.write_text(config_text.replace(empty,'CONFIG_XNU_EXTRA_LD_ARCHIVES="-Wl,-force_load,'+str(archive)+'"'))
+    # This is our disposable runner build output. Force a new executable link;
+    # do not mistake a previously successful baseline for touch integration.
+    raw_kernel.unlink()
+    link_rc=run([sys.executable,core/'unixnu','build','kernel','-D',device,'-j','2'],cwd=core,check=False)
+    report['touch_link_exit_code']=link_rc;save('kernel.json',report)
+    if link_rc:raise RuntimeError('Touch kernel executable link/prelink failed')
+    link_inputs=raw_kernel.parent/'mach.development.bcm2837.link/mach.development.bcm2837.linkarchives'
+    if str(archive) not in link_inputs.read_text():raise RuntimeError('Actual linker inputs omit touch archive')
+    audit=audit_kernel(raw_kernel.read_bytes(),(core/'out/fuxi/kernel/kernel.macho').read_bytes(),
+        [p.read_bytes() for p in objects],baseline_undefined)
+    audit['archive_sha256']=hashlib.sha256(archive.read_bytes()).hexdigest()
+    audit['actual_link_inputs']=link_inputs.read_text()
+    save('touch-link-audit.json',audit)
+    print('TOUCH_LINK_AUDIT '+json.dumps(audit),flush=True)
+    report['touch_kernel_linked']=True
+    report['initialization_path']='Two metaclass constructors retained in kernel table; runtime not observed; no IOService personality'
+    report['hid_device_abi_qualified']=False
+    save('kernel.json',report)
+    print('Full native touch dependency objects linked into executable kernel and prelink; hardware startup remains blocked.')
 
 def summary():
     pieces=[]
@@ -209,7 +263,7 @@ def summary():
         if (OUT/name).exists():pieces.append((name,json.loads((OUT/name).read_text())))
     text='# fuxi macOS investigation\n\n'
     for name,data in pieces:text+='## '+name+'\n\n```json\n'+json.dumps(data,indent=2)+'\n```\n\n'
-    text+='Physical provider and touch kernel integration are incomplete. No device operation or boot image.\n'
+    text+='Physical provider, HID device ABI qualification, service matching and hardware startup remain incomplete. No device operation or boot image.\n'
     print(text)
     if os.environ.get('GITHUB_STEP_SUMMARY'):
         with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:f.write(text)
