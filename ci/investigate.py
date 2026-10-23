@@ -94,6 +94,9 @@ def checkout(name):
     url,pin=PINS[name];directory=ROOT/'upstream'/name
     directory.parent.mkdir(parents=True,exist_ok=True)
     run(['git','clone','--no-checkout',url,directory])
+    # Upstream may rewrite branch history. Fetch the audited object explicitly;
+    # never silently advance the pin to make checkout succeed.
+    run(['git','fetch','--no-tags','origin',pin],cwd=directory)
     run(['git','checkout','--detach',pin],cwd=directory)
     actual=subprocess.check_output(['git','rev-parse','HEAD'],cwd=directory,text=True).strip()
     if actual!=pin:raise ValueError('Commit pin mismatch')
