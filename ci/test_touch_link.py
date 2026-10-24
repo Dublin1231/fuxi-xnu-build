@@ -3,7 +3,7 @@ import struct
 import unittest
 from touch_link import MachO,audit_kernel
 
-def fixture(kind=2,missing=False,bad_init=False,open_gate=False,host_start=False,unresolved=False,ctor_suffix=''):
+def fixture(kind=2,missing=False,bad_init=False,open_gate=False,host_start=False,unresolved=False,ctor_suffix='',debug_duplicates=False):
     names=['_fuxi_st_board_start','_st_board_init',
         '__GLOBAL__sub_I_FuxiSTWorkLoop.cpp'+ctor_suffix,'__GLOBAL__sub_I_FuxiSharedRegistry.cpp'+ctor_suffix]
     if host_start:names+=['_st_board_start_offline']
@@ -13,6 +13,8 @@ def fixture(kind=2,missing=False,bad_init=False,open_gate=False,host_start=False
         if missing and name=='_st_board_init':continue
         symbol_kind=1 if name=='_unknown_provider_write' else 0xe if 'GLOBAL__sub_I_' in name else 0xf
         symbols+=struct.pack('<IBBHQ',len(strings),symbol_kind,1,0,0x1000+index*16)
+        if debug_duplicates and name!='_unknown_provider_write':
+            symbols+=struct.pack('<IBBHQ',len(strings),0x24,1,0,0x1000+index*16)
         strings+=name.encode()+b'\0'
     segment=struct.pack('<II16sQQQQiiII',0x19,232,b'__DATA_CONST',0x1000,0x200,0x200,0x120,7,3,2,0)
     segment+=struct.pack('<16s16sQQIIIIIIII',b'__text',b'__TEXT_EXEC',0x1000,0x100,0x200,2,0,0,0x80000400,0,0,0)
@@ -41,6 +43,12 @@ class BinaryAuditTests(unittest.TestCase):
         self.assertEqual(len(result['class_constructor_pointers']),2)
         with self.assertRaisesRegex(ValueError,'constructor not retained'):
             self.audit(fixture(ctor_suffix='.llvm.12345',bad_init=True))
+    def test_debug_records_do_not_duplicate_live_initializers_or_gate(self):
+        result=self.audit(fixture(debug_duplicates=True))
+        self.assertEqual(result['production_gate'],'constant ST_BLOCKED; no calls')
+        self.assertEqual(len(result['class_constructor_pointers']),2)
+        for kw in [dict(bad_init=True),dict(open_gate=True)]:
+            with self.subTest(kw=kw),self.assertRaises(ValueError):self.audit(fixture(debug_duplicates=True,**kw))
     def test_enabled_gate_and_host_start_rejected(self):
         for kw in [dict(open_gate=True),dict(host_start=True)]:
             with self.subTest(kw=kw),self.assertRaises(ValueError):self.audit(fixture(**kw))

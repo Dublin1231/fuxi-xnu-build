@@ -64,7 +64,9 @@ class MachO:
             [self.unpack('<Q',s['offset']+i)[0] for i in range(0,s['size'],8)]])
             for s in self.sections if s['flags']&0xff==9],
             touch_symbols=[dict(s,value=hex(s['value'])) for s in self.symbols if 'Fuxi' in s['name']],
-            gate_symbols=[dict(s,value=hex(s['value'])) for s in self.symbols if s['name']=='_fuxi_st_board_start'])
+            gate_symbols=[dict(s,value=hex(s['value']),code=self.code_at(s['value'],8).hex())
+                for s in self.symbols if s['name']=='_fuxi_st_board_start' and not s['kind']&0xe0
+                and s['kind']&0xe==14])
 
 def audit_kernel(kernel,prelinked,objects,baseline_undefined):
     image=MachO(kernel);carrier=MachO(prelinked)
@@ -89,7 +91,8 @@ def audit_kernel(kernel,prelinked,objects,baseline_undefined):
         if len(matches)!=1:
             raise ValueError('Class constructor not retained in kernel initializer table: '+filename)
         initializers.append(dict(symbol=matches[0]['name'],address=hex(matches[0]['value'])))
-    gates=[s for s in image.symbols if s['name']=='_fuxi_st_board_start']
+    gates=[s for s in image.symbols if s['name']=='_fuxi_st_board_start' and not s['kind']&0xe0
+        and s['kind']&0xe==14]
     # Ordinary ARM64 -O2: mov w0, #-6 (ST_BLOCKED); ret. Reject any changed/calling gate.
     if len(gates)!=1 or image.code_at(gates[0]['value'],8)!=struct.pack('<II',0x128000a0,0xd65f03c0):
         raise ValueError('Production gate is not the qualified constant ST_BLOCKED return')
