@@ -57,6 +57,7 @@ class FuxiSharedRegistry : public OSObject {
             for(unsigned i=0;i<SR_RESOURCES;i++)if(self->manager.resource[i].frozen)return kIOReturnSuccess;
             __atomic_store_n(&self->closed,1,__ATOMIC_RELEASE);
             c->dropPin=self->pinned;self->pinned=false;c->result=ST_OK;break;
+        default:c->result=ST_ARGUMENT;break;
         }
         return kIOReturnSuccess;
     }

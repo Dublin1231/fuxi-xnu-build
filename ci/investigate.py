@@ -197,7 +197,8 @@ def kernel():
     if not Path(record['directory']).is_dir():raise RuntimeError('Receipt working directory absent')
     for source in [NATIVE/'FuxiSTWorkLoop.cpp',NATIVE/'shared/FuxiSharedRegistry.cpp']:
         obj=OUT/(source.stem+'.o')
-        command=rewrite_cpp(record,source,obj)+['-Werror=shadow-field','-Werror=missing-prototypes']
+        command=rewrite_cpp(record,source,obj)+['-Werror=shadow-field','-Werror=missing-prototypes',
+            '-Werror=switch-default']
         save(source.stem+'-command.json',command)
         rc=run(command,cwd=record['directory'],check=False)
         entry=dict(source=str(source.relative_to(ROOT)),exit_code=rc)
