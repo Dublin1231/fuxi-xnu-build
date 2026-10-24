@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: BSD-2-Clause
- * IOKit adapter SOURCE ONLY. Not SDK-compiled, linked, registered or booted.
+ * IOKit helper adapter. Static compilation/linking do not prove runtime use.
  * The owning IOService must keep backend leases alive until stop_gated succeeds.
  * There is deliberately no MMIO backend, IRQ registration or service personality.
  */
@@ -7,7 +7,7 @@
 #include <IOKit/IOEventSource.h>
 #include <IOKit/IOWorkLoop.h>
 #include <IOKit/IOReturn.h>
-#include "board_lifecycle.h"
+#include "FuxiSTWorkLoop.h"
 
 class FuxiSTEventSource : public IOEventSource {
     OSDeclareDefaultStructors(FuxiSTEventSource)
@@ -15,9 +15,9 @@ class FuxiSTEventSource : public IOEventSource {
     IOService *heldOwner=nullptr;
     unsigned queued=0,wakeEnabled=0;
 public:
-    bool initForBoard(IOService *owner,st_board *value) {
-        if(!owner || !value || !IOEventSource::init(owner,nullptr))return false;
-        heldOwner=owner;heldOwner->retain();board=value;
+    bool initForBoard(IOService *serviceOwner,st_board *value) {
+        if(!serviceOwner || !value || !IOEventSource::init(serviceOwner,nullptr))return false;
+        heldOwner=serviceOwner;heldOwner->retain();board=value;
         __atomic_store_n(&wakeEnabled,1,__ATOMIC_RELEASE);return true;
     }
     // Called through the backend's ISR-safe wake callback. The shared dispatcher

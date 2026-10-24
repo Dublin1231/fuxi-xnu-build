@@ -83,6 +83,7 @@ def host():
         '-fsanitize=undefined','-fno-sanitize-recover=undefined']
     core=[NATIVE/'board_lifecycle.c',NATIVE/'fuxi_st.c',NATIVE/'fuxi_st_bridge.c']
     suites=[('lifecycle',['-DST_BOARD_HOST_TEST',NATIVE/'test_board_lifecycle.c']+core),
+        ('hid-reports',[NATIVE/'test_hid_reports.c',NATIVE/'fuxi_st.c']),
         ('shared',['-DST_BOARD_HOST_TEST',NATIVE/'shared/test_shared_resources.c',NATIVE/'shared/shared_resources.c',
             NATIVE/'shared/shared_board_backend.c']+core),
         ('provider',[NATIVE/'provider/test_cmddb.c',NATIVE/'provider/cmddb.c',NATIVE/'provider/vrm_voltage.c'])]
@@ -196,7 +197,7 @@ def kernel():
     if not Path(record['directory']).is_dir():raise RuntimeError('Receipt working directory absent')
     for source in [NATIVE/'FuxiSTWorkLoop.cpp',NATIVE/'shared/FuxiSharedRegistry.cpp']:
         obj=OUT/(source.stem+'.o')
-        command=rewrite_cpp(record,source,obj)
+        command=rewrite_cpp(record,source,obj)+['-Werror=shadow-field','-Werror=missing-prototypes']
         save(source.stem+'-command.json',command)
         rc=run(command,cwd=record['directory'],check=False)
         entry=dict(source=str(source.relative_to(ROOT)),exit_code=rc)
@@ -216,7 +217,8 @@ def kernel():
     objects=[OUT/'FuxiSTWorkLoop.o',OUT/'FuxiSharedRegistry.o']
     for source in sources:
         obj=OUT/(source.stem+'.o')
-        command=rewrite_cpp(c_record,source,obj)+['-I',str(tree/'drivers/NativeGeniSpi')]
+        command=rewrite_cpp(c_record,source,obj)+['-I',str(tree/'drivers/NativeGeniSpi'),
+            '-Werror=tautological-unsigned-enum-zero-compare']
         save(source.stem+'-command.json',command)
         rc=run(command,cwd=c_record['directory'],check=False)
         entry=dict(source=str(source),source_sha256=hashlib.sha256(source.read_bytes()).hexdigest(),exit_code=rc)
@@ -262,10 +264,15 @@ def kernel():
     report['hid_device_abi_qualified']=False
     save('kernel.json',report)
     print('Full native touch dependency objects linked into executable kernel and prelink; hardware startup remains blocked.')
+    from hid_review import qualify
+    hid=qualify(tree,NATIVE,core/'out/fuxi/kernel/kernel.macho',run,OUT)
+    report['hid_private_binary_abi_audited']=hid['private_binary_abi_audited']
+    report['hid_runtime_qualified']=False
+    save('kernel.json',report)
 
 def summary():
     pieces=[]
-    for name in ['host.json','kernel.json']:
+    for name in ['host.json','kernel.json','hid-review.json']:
         if (OUT/name).exists():pieces.append((name,json.loads((OUT/name).read_text())))
     text='# fuxi macOS investigation\n\n'
     for name,data in pieces:text+='## '+name+'\n\n```json\n'+json.dumps(data,indent=2)+'\n```\n\n'

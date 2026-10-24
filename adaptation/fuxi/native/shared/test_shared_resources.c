@@ -57,6 +57,18 @@ static void bind(struct fake *f,struct st_shared_backend *b,struct st_board *boa
 }
 int main(void) {
     struct fake f;uintptr_t t=0,u=0;struct sr_request a,b;
+    {
+        struct st_shared_backend backend={0};struct st_board board;
+        init(&f,1);bind(&f,&backend,&board);
+        const enum st_resource bad[]={(enum st_resource)-1,ST_RESOURCE_COUNT};
+        for(unsigned i=0;i<2;i++) {
+            uintptr_t token=123;
+            CHECK(board.ops.acquire(board.ops.ctx,bad[i],&token)==ST_ARGUMENT);CHECK(token==0);
+            CHECK(board.ops.release(board.ops.ctx,bad[i],1)==ST_ARGUMENT);
+            CHECK(f.platforms==0 && leases(&f)==0);
+        }
+        CHECK(ssb_detach(&backend)==ST_OK);
+    }
     init(&f,0);a=range(100,1000);CHECK(sr_acquire(&f.manager,SR_VDD,1,&a,&t)==ST_BLOCKED);CHECK(t==0 && f.calls==0);
     f.qualified=0;CHECK(sr_import_baseline(&f.manager,SR_VDD)==ST_BLOCKED);CHECK(f.reads==0);
     init(&f,1);a=range(100,1000);b=range(200,500);

@@ -3,7 +3,7 @@
 static int acquire(void *ctx,enum st_resource r,uintptr_t *token) {
     struct st_shared_backend *b=ctx;struct ssb_bundle *bundle;unsigned ids[3],count=0,i;int rc=ST_OK;
     if(token)*token=0;
-    if(!token || r<0 || r>=ST_RESOURCE_COUNT)return ST_ARGUMENT;
+    if(!token || (unsigned)r>=ST_RESOURCE_COUNT)return ST_ARGUMENT;
     if(!b->manager)return ST_BLOCKED;
     bundle=&b->bundle[r];if(bundle->token || b->generation>=UINTPTR_MAX/256)return ST_BLOCKED;
     switch(r) {
@@ -31,7 +31,7 @@ static int acquire(void *ctx,enum st_resource r,uintptr_t *token) {
 }
 static int release(void *ctx,enum st_resource r,uintptr_t token) {
     struct st_shared_backend *b=ctx;struct ssb_bundle *bundle;int rc;unsigned i;
-    if(r<0 || r>=ST_RESOURCE_COUNT)return ST_ARGUMENT;
+    if((unsigned)r>=ST_RESOURCE_COUNT)return ST_ARGUMENT;
     bundle=&b->bundle[r];if(!token || bundle->token!=token)return ST_ARGUMENT;
     for(i=bundle->count;i>0;i--)if(bundle->part[i-1]) {
         rc=bundle->shared?sr_release(b->manager,b->owner,bundle->part[i-1]):

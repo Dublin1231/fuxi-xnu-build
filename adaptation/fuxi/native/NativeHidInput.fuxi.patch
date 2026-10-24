@@ -1,0 +1,122 @@
+--- a/NativeHidInput.cpp
++++ b/NativeHidInput.cpp
+@@ -2,6 +2,8 @@
+ // Explicit offline keyboard/consumer input source. Uses the unchanged original
+ // HID parser and event dispatch; no user-client entitlement is substituted.
+ #include "OriginalHidDeviceABI.h"
++#include "NativeFuxiHid.h"
++#include "fuxi_hid_reports.h"
+ #include <IOKit/IOBufferMemoryDescriptor.h>
+ #include <IOKit/IOWorkLoop.h>
+ #include <IOKit/IOTimerEventSource.h>
+@@ -132,6 +134,8 @@
+     // The digitizer is a separate service from the keyboard: backboardd matches digitizers by primary usage page/usage
+     // (Digitizer/Touch Screen) and the Built-In flag, which a combined keyboard-first descriptor would not provide.
+     bool touchOnly=false;
++    bool fuxiRaw=false;
++    bool fuxiReady=false;
+     bool eventDriverFound=false;
+     uint32_t lastSeq=0;
+     // Fingers sent as down in the previous report; a vanished identifier gets one explicit tip-up report.
+@@ -224,7 +228,7 @@
+         if(!eventDriverFound) {
+             IORegistryEntry *driver=eventDriver(this,4);
+             eventDriverFound=driver!=nullptr;
+-            if(driver && (touchEnabled || touchOnly))edge::install(driver);
++            if(driver && !fuxiRaw && (touchEnabled || touchOnly))edge::install(driver);
+         }
+         return eventDriverFound;
+     }
+@@ -263,7 +267,44 @@
+         if(!self->down) {self->down=true;source->setTimeoutMS(100);}
+         else {self->down=false;source->setTimeoutMS(1000);}
+     }
++    // The board producer must hold a retained device reference and quiesce its
++    // worker before stop/free. Reports are already normalized by fuxi_st.c.
++    // Never share this service with the sheng seqlock producer.
++    static IOReturn fuxiAction(OSObject *owner,void *bytes,void *amount,void *,void *) {
++        NativeHidInput *self=OSDynamicCast(NativeHidInput,owner);
++        size_t count=reinterpret_cast<uintptr_t>(amount);
++        const uint8_t *reports=static_cast<const uint8_t *>(bytes);
++        if(!self || !self->fuxiRaw || !self->fuxiReady || !reports || count<1 || count>32)
++            return kIOReturnBadArgument;
++        if(!fuxi_hid_reports_valid(reports,count*FUXI_ST_REPORT_BYTES,count))return kIOReturnBadArgument;
++        if(!self->hasEventDriverCached())return kIOReturnNotReady;
++        IOBufferMemoryDescriptor *buffers[32]={};
++        IOReturn result=kIOReturnSuccess;
++        for(size_t i=0;i<count;++i) {
++            const uint8_t *r=reports+62*i;
++            if(r[0]!=3 || r[61]>10){result=kIOReturnBadArgument;break;}
++            buffers[i]=IOBufferMemoryDescriptor::withBytes(r,62,kIODirectionNone);
++            if(!buffers[i]){result=kIOReturnNoMemory;break;}
++        }
++        if(result==kIOReturnSuccess)for(size_t i=0;i<count;++i) {
++            result=self->handleReport(buffers[i],0,0);
++            if(result!=kIOReturnSuccess)break; // producer quarantines partial delivery
++        }
++        for(size_t i=0;i<count;++i)OSSafeReleaseNULL(buffers[i]);
++        return result;
++    }
++    static IOReturn fuxiReadyAction(OSObject *owner,void *ready,void *,void *,void *) {
++        NativeHidInput *self=OSDynamicCast(NativeHidInput,owner);
++        if(!self || !self->fuxiRaw)return kIOReturnBadArgument;
++        self->fuxiReady=ready!=nullptr;return kIOReturnSuccess;
++    }
+ public:
++    void setFuxiTouchOnly() {touchOnly=true;fuxiRaw=true;}
++    int sendFuxiReports(const uint8_t *bytes,size_t count) {
++        if(!inputLoop)return -1;
++        return inputLoop->runAction(&NativeHidInput::fuxiAction,this,
++            const_cast<uint8_t *>(bytes),reinterpret_cast<void *>(uintptr_t(count)))==kIOReturnSuccess?0:-1;
++    }
+     void setTouchOnly() {touchOnly=true;}
+     IOWorkLoop *getWorkLoop() const override {return inputLoop;}
+     OSString *newTransportString() const override {return OSString::withCString(touchOnly?"SPI":"Virtual");}
+@@ -295,11 +336,17 @@
+         // multi-finger or system gestures).
+         if(touchOnly||touchEnabled){setProperty("Built-In",true);setProperty("DisplayIntegrated",true);setProperty("DigitizerCollectionDispatch",true);}
+         if(!IOHIDDevice::start(provider))return false;
++        if(fuxiRaw) {
++            if(inputLoop->runAction(&NativeHidInput::fuxiReadyAction,this,this)!=kIOReturnSuccess) {
++                IOHIDDevice::stop(provider);return false;
++            }
++            return true; // no legacy timer, producer, button sink or edge hook
++        }
+         timer=IOTimerEventSource::timerEventSource(this,tick);
+         if(!timer || inputLoop->addEventSource(timer)!=kIOReturnSuccess) {
+             OSSafeReleaseNULL(timer);IOHIDDevice::stop(provider);return false;
+         }
+-        if(touchOnly||touchEnabled) {
++        if(!fuxiRaw && (touchOnly||touchEnabled)) {
+             if(&native_touch_set_sink)native_touch_set_sink(&NativeHidInput::touchNotify,this);
+         }
+         if(!touchOnly && &native_buttons_set_sink)native_buttons_set_sink(&NativeHidInput::buttonsNotify,this);
+@@ -308,7 +355,12 @@
+         timer->setTimeoutMS(1000);return true;
+     }
+     void stop(IOService *provider) override {
+-        if((touchOnly||touchEnabled) && &native_touch_set_sink)native_touch_set_sink(nullptr,nullptr);
++        if(fuxiRaw) {
++            // The retained owner has quiesced the producer; drain report work
++            // and close acceptance under the same gate before superclass stop.
++            (void)inputLoop->runAction(&NativeHidInput::fuxiReadyAction,this);
++        }
++        if(!fuxiRaw && (touchOnly||touchEnabled) && &native_touch_set_sink)native_touch_set_sink(nullptr,nullptr);
+         if(!touchOnly && &native_buttons_set_sink)native_buttons_set_sink(nullptr,nullptr);
+         if(timer){timer->cancelTimeout();inputLoop->removeEventSource(timer);OSSafeReleaseNULL(timer);}
+         IOHIDDevice::stop(provider);
+@@ -318,3 +370,14 @@
+ OSDefineMetaClassAndStructors(NativeHidInput,IOHIDDevice)
+ extern "C" IOService *native_hid_input_allocate(void) {return new NativeHidInput;}
+ extern "C" IOService *native_hid_touch_allocate(void) {NativeHidInput *device=new NativeHidInput;if(device)device->setTouchOnly();return device;}
++
++// New service remains uninstantiated until the fuxi board driver is qualified.
++extern "C" IOService *native_fuxi_st_hid_allocate(void) {
++    NativeHidInput *device=new NativeHidInput;
++    if(device)device->setFuxiTouchOnly();
++    return device;
++}
++extern "C" int native_fuxi_st_deliver(void *device,const uint8_t *reports,size_t count) {
++    NativeHidInput *self=OSDynamicCast(NativeHidInput,static_cast<IOService *>(device));
++    return self?self->sendFuxiReports(reports,count):-1;
++}
