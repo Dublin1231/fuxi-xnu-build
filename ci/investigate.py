@@ -270,10 +270,11 @@ def kernel():
     report['hid_private_binary_abi_audited']=hid['private_binary_abi_audited']
     report['hid_runtime_qualified']=False
     from hid_service import integrate
-    service=integrate(core,device,tree,NATIVE,OUT,record,objects,baseline_undefined,run,rewrite_cpp)
+    service=integrate(core,device,tree,NATIVE,OUT,record,objects,baseline_undefined,run,rewrite_cpp,hid['original_abi'])
     report['hid_object_linked']=service['hid_object_linked']
     report['hid_constructor_deferred']=service['hid_constructor_deferred']
     report['board_service_compiled_and_linked']=True
+    report['initialization_path']='Three core metaclass initializers retained; HID constructor deferred; no installed personality or runtime observation'
     save('kernel.json',report)
 
 def summary():

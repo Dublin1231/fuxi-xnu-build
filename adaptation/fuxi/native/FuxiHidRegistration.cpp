@@ -3,7 +3,10 @@
 #include <libkern/c++/OSSymbol.h>
 #include <mach/kmod.h>
 extern kmod_info_t g_kernel_kmod_info;
-extern const OSMetaClass fuxi_original_hid_meta __asm__("__ZN11IOHIDDevice10gMetaClassE");
+/* The exported object is IOHIDDevice::MetaClass, a concrete subclass. Refer
+ * only to its address; declaring an object of abstract OSMetaClass is invalid.
+ * No data is dereferenced through this opaque symbol declaration. */
+extern const unsigned char fuxi_original_hid_meta[] __asm__("__ZN11IOHIDDevice10gMetaClassE");
 extern "C" void fuxi_hid_constructor(void) __asm__("__GLOBAL__sub_I_NativeHidInput.cpp");
 /* No static initializer, kext load request, boot argument or implicit retry.
  * pre/postModLoad are paired. A failed registration is terminal for this boot:
@@ -15,7 +18,8 @@ extern "C" int native_fuxi_st_register_hid(void) {
     const OSSymbol *name=OSSymbol::withCString("IOHIDDevice");
     const OSMetaClass *meta=name?OSMetaClass::getMetaClassWithName(name):nullptr;
     OSSafeReleaseNULL(name);
-    if(meta!=&fuxi_original_hid_meta || !meta || meta->getClassSize()!=208)return ST_BLOCKED;
+    if(!meta || static_cast<const void *>(meta)!=static_cast<const void *>(fuxi_original_hid_meta)
+        || meta->getClassSize()!=208)return ST_BLOCKED;
     unsigned expected=0;
     if(!__atomic_compare_exchange_n(&registrationState,&expected,1,false,__ATOMIC_ACQ_REL,__ATOMIC_ACQUIRE))
         return expected==2?ST_OK:ST_BLOCKED;
