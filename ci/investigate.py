@@ -269,11 +269,16 @@ def kernel():
     hid=qualify(tree,NATIVE,core/'out/fuxi/kernel/kernel.macho',run,OUT)
     report['hid_private_binary_abi_audited']=hid['private_binary_abi_audited']
     report['hid_runtime_qualified']=False
+    from hid_service import integrate
+    service=integrate(core,device,tree,NATIVE,OUT,record,objects,baseline_undefined,run,rewrite_cpp)
+    report['hid_object_linked']=service['hid_object_linked']
+    report['hid_constructor_deferred']=service['hid_constructor_deferred']
+    report['board_service_compiled_and_linked']=True
     save('kernel.json',report)
 
 def summary():
     pieces=[]
-    for name in ['host.json','kernel.json','hid-review.json']:
+    for name in ['host.json','kernel.json','hid-review.json','hid-service.json']:
         if (OUT/name).exists():pieces.append((name,json.loads((OUT/name).read_text())))
     text='# fuxi macOS investigation\n\n'
     for name,data in pieces:text+='## '+name+'\n\n```json\n'+json.dumps(data,indent=2)+'\n```\n\n'

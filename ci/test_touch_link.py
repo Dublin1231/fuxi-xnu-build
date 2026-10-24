@@ -3,9 +3,10 @@ import struct
 import unittest
 from touch_link import MachO,audit_kernel
 
-def fixture(kind=2,missing=False,bad_init=False,open_gate=False,host_start=False,unresolved=False,ctor_suffix='',debug_duplicates=False):
+def fixture(kind=2,missing=False,bad_init=False,open_gate=False,host_start=False,unresolved=False,ctor_suffix='',debug_duplicates=False,service=False,hid_early=False,policy_open=False):
     names=['_fuxi_st_board_start','_st_board_init',
         '__GLOBAL__sub_I_FuxiSTWorkLoop.cpp'+ctor_suffix,'__GLOBAL__sub_I_FuxiSharedRegistry.cpp'+ctor_suffix]
+    if service:names+=['__GLOBAL__sub_I_FuxiSTService.cpp','__GLOBAL__sub_I_NativeHidInput.cpp','_native_fuxi_st_boot_policy']
     if host_start:names+=['_st_board_start_offline']
     if unresolved:names+=['_unknown_provider_write']
     strings=b'\0';symbols=b''
@@ -18,12 +19,16 @@ def fixture(kind=2,missing=False,bad_init=False,open_gate=False,host_start=False
         strings+=name.encode()+b'\0'
     segment=struct.pack('<II16sQQQQiiII',0x19,232,b'__DATA_CONST',0x1000,0x200,0x200,0x120,7,3,2,0)
     segment+=struct.pack('<16s16sQQIIIIIIII',b'__text',b'__TEXT_EXEC',0x1000,0x100,0x200,2,0,0,0x80000400,0,0,0)
-    segment+=struct.pack('<16s16sQQIIIIIIII',b'__mod_init_func',b'__DATA_CONST',0x1100,16,0x300,3,0,0,9,0,0,0)
+    segment+=struct.pack('<16s16sQQIIIIIIII',b'__mod_init_func',b'__DATA_CONST',0x1100,(32 if hid_early else 24) if service else 16,0x300,3,0,0,9,0,0,0)
     symtab=struct.pack('<6I',2,24,0x320,len(symbols)//16,0x400,len(strings))
     header=struct.pack('<8I',0xfeedfacf,0x100000c,0,kind,2,256,0,0)
     data=bytearray(0x400+len(strings));data[:288]=header+segment+symtab
     data[0x200:0x208]=struct.pack('<II',0x52800000 if open_gate else 0x128000a0,0xd65f03c0)
     data[0x300:0x310]=struct.pack('<QQ',0 if bad_init else 0x1020,0x1030)
+    if service:
+        data[0x310:0x318]=struct.pack('<Q',0x1040)
+        if hid_early:data[0x318:0x320]=struct.pack('<Q',0x1050)
+        data[0x260:0x268]=struct.pack('<II',0x52800000 if policy_open else 0x128000a0,0xd65f03c0)
     data[0x320:0x320+len(symbols)]=symbols;data[0x400:]=strings
     return bytes(data)
 

@@ -68,7 +68,7 @@ class MachO:
                 for s in self.symbols if s['name']=='_fuxi_st_board_start' and not s['kind']&0xe0
                 and s['kind']&0xe==14])
 
-def audit_kernel(kernel,prelinked,objects,baseline_undefined):
+def audit_kernel(kernel,prelinked,objects,baseline_undefined,constructor_files=('FuxiSTWorkLoop.cpp','FuxiSharedRegistry.cpp')):
     image=MachO(kernel);carrier=MachO(prelinked)
     if image.kind!=2 or carrier.kind!=2:raise ValueError('Expected executable kernel images, not relocatable link')
     required=set()
@@ -81,7 +81,7 @@ def audit_kernel(kernel,prelinked,objects,baseline_undefined):
         if missing:raise ValueError(label+' discarded touch definitions: '+str(sorted(missing)))
         new=parsed.undefined()-set(baseline_undefined)
         if new:raise ValueError(label+' introduced unresolved imports: '+str(sorted(new)))
-    expected=['FuxiSTWorkLoop.cpp','FuxiSharedRegistry.cpp'];initializers=[]
+    expected=constructor_files;initializers=[]
     targets=image.constructor_targets()
     for filename in expected:
         # LLVM can append a uniqueness suffix to local initializer names.
