@@ -1,0 +1,37 @@
+name: Fuxi GPU assets only
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: macos-14
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [metal, mesa, tools]
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_15.4.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: bangprovn/ios-fuxi
+          ref: 068faa44bcebb6b8a2292b6113a94ddb85214810
+          persist-credentials: false
+          path: public-source
+      - name: Build pinned public iOS assets
+        working-directory: public-source
+        run: bash tools/ci/build.sh "${{ matrix.target }}"
+      - name: Upload public assets and actual build logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuxi-${{ matrix.target }}-068faa44
+          path: public-source/tools/out/ci/${{ matrix.target }}/
+          if-no-files-found: error
+          retention-days: 7
+# This is a prepared workflow, not dispatched. Put it into an authorized
+# repository's .github/workflows/ only after choosing the build environment.
+# Artifacts must pass qualify-fuxi-gpu-assets.py and provenance checks on return.
+
