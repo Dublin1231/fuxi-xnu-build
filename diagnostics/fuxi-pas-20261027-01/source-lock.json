@@ -1,0 +1,448 @@
+{
+  "upstream": "bangprovn/ios-fuxi",
+  "commit": "068faa44bcebb6b8a2292b6113a94ddb85214810",
+  "baseline_driver_sha256": "0d298952b9bf49d4d090ecf158d9d70918162f5a788f7a67f3c5ec0378fa2850",
+  "patched_driver_sha256": "4f2127a3b92acca6fcbfac4cc3dc81e9fb9ce636210e48c3e4c90cd04f58eeba",
+  "patch_sha256": "604d2d4cd4fb497e04d8bec07df2c9e2e3e2bcd807f2f935416eedf7b2b15b98",
+  "kernel_patches": [
+    {
+      "file": "xnu/patches/0001-new-clang-drop-removed-auto-var-init-flag.patch",
+      "sha256": "c057dea49d5bcccbc7d317d60f91cc8062689fd26d3d739f709e279bddb56a1c"
+    },
+    {
+      "file": "xnu/patches/0002-new-clang-backport-UIO_STACKBUF.patch",
+      "sha256": "19f7571eb90608ef66f1d8cf9dee5333d4fbbccbfeee9ea244b90cb4a4240727"
+    },
+    {
+      "file": "xnu/patches/0003-sweet-framebuffer-serial-console.patch",
+      "sha256": "ff08f768b0e7d830efd1cab98b8cb18e66c60935c4b640e74146e5c1cbb5371c"
+    },
+    {
+      "file": "xnu/patches/0004-sweet-machine-config.patch",
+      "sha256": "b18a77a0b994871937a0b4138906f9f1693153c61eca6e598018271360ad5432"
+    },
+    {
+      "file": "xnu/patches/0005-non-pac-build-fixes.patch",
+      "sha256": "b84deb9b9e5b8426aca7b713c3c5b5829e4e22354dd86d64329f14b15704d58c"
+    },
+    {
+      "file": "xnu/patches/0006-sweet-master-config-open-source-asm-pmap.patch",
+      "sha256": "c7cf993c8362a689371f2b819903792be2deb5032e9ea7edc20a4abd627e233f"
+    },
+    {
+      "file": "xnu/patches/0007-sweet-stub-apple-internal-headers.patch",
+      "sha256": "8c8e43ac50591a2c6e4f1c1bff4edeb1935f8e02b28db50596f3be9a3a80c8e5"
+    },
+    {
+      "file": "xnu/patches/0008-sweet-fill-closed-lib-gaps-kpc-stub.patch",
+      "sha256": "4a959eeac46696c08fe826a0d0a7d602c0767f5f92bf28bd641e5c6fb5a7d452"
+    },
+    {
+      "file": "xnu/patches/0009-sweet-drop-apple-soc-only-exports.patch",
+      "sha256": "07ed88210debc8395944e1fafd1771abd5935f31ebae620ff8f15fd96d9a810e"
+    },
+    {
+      "file": "xnu/patches/0010-sweet-early-framebuffer-debug.patch",
+      "sha256": "bdc940de4f8d51b0d254b89e54036dcbfd1e33baaaa13267ae2b9ad980046c5a"
+    },
+    {
+      "file": "xnu/patches/0011-sweet-physmap-alignment-padding.patch",
+      "sha256": "4c1c2d3f82222a8182060ffd5f681905c20d9232ec972001daa8c25b21ada520"
+    },
+    {
+      "file": "xnu/patches/0012-sweet-keep-debug-console-after-ttbr0.patch",
+      "sha256": "6e5f5e04b940f2c35e17f97df480784459a922e8fc40b8c75b637325c35a474f"
+    },
+    {
+      "file": "xnu/patches/0013-sweet-kmem-rng-without-corecrypto.patch",
+      "sha256": "12132c39435479e546d1ce4e24622d2ad145c8eb6274293b690ea5e1e58d9f91"
+    },
+    {
+      "file": "xnu/patches/0014-sweet-kernel-hmac-prng.patch",
+      "sha256": "04d13bf3c6c2e23c95c55677a6aa8f1e5c69971d8615eee7d0f05ba9d6963237"
+    },
+    {
+      "file": "xnu/patches/0015-sweet-unavailable-trust-cache-runtime.patch",
+      "sha256": "52c922333707deb9f9e697cf5ba092213dcb578f36ca209e750582a650b1eb18"
+    },
+    {
+      "file": "xnu/patches/0016-sweet-device-tree-platform-expert.patch",
+      "sha256": "b71c0fc56d832537a6ca096a3fe4893c498c234adb4fde419e1a791de74172ab"
+    },
+    {
+      "file": "xnu/patches/0017-sweet-device-tree-virtual-timer-irq.patch",
+      "sha256": "b3b561af3354f8c1297a084c8025c282d28aeb0d4e14758d6d63bdc81cd0bd50"
+    },
+    {
+      "file": "xnu/patches/0018-sweet-boot-cpu-driver.patch",
+      "sha256": "06de6e84d8ff9b0307872fb78a827e84fc1e16a1b7286a87f0e618a5dc2692a9"
+    },
+    {
+      "file": "xnu/patches/0019-sweet-builtin-pthread.patch",
+      "sha256": "ee34ec3e5876f1316c6665059c3c38a09602bc100d805cebe23f260e2033899d"
+    },
+    {
+      "file": "xnu/patches/0020-sweet-portable-aes-cbc.patch",
+      "sha256": "b05cdf11845d95bc9cff7d9ca44ef4d24d303bcf759cb5bb74a9408473161b26"
+    },
+    {
+      "file": "xnu/patches/0021-sweet-mockfs-ramdisk-root.patch",
+      "sha256": "27b5a4fb195e772178a60311d5d1935a908bd223ea7ebb5fca811532ad975e2c"
+    },
+    {
+      "file": "xnu/patches/0022-sweet-ramdisk-root-without-iomedia.patch",
+      "sha256": "ca83981bb7bd4d4f8ab22919f74ee88577b628f7a9049af222af609d9a721461"
+    },
+    {
+      "file": "xnu/patches/0023-sweet-builtin-sha256-for-libkern.patch",
+      "sha256": "9f2e879d87d976200ee8697182121a15d73c22ec3beeb14c2d35069be01267f9"
+    },
+    {
+      "file": "xnu/patches/0024-sweet-mockfs-virtual-ramdisk-io.patch",
+      "sha256": "20d0a830ed4128141b3b211fd50cfed090bc490597c4f8b36256cc93f003dc76"
+    },
+    {
+      "file": "xnu/patches/0025-sweet-builtin-amfi-no-entitlements.patch",
+      "sha256": "5cb4008df97884c35943d6f4b9349e89768072b9bf00e1032a32a8f65166eae6"
+    },
+    {
+      "file": "xnu/patches/0026-sweet-builtin-hfs.patch",
+      "sha256": "465d96fd71bc2094d0aa0388e1a2586ea7fd856d021272d1d2d7083bd020d6e4"
+    },
+    {
+      "file": "xnu/patches/0027-sweet-bearssl-md5.patch",
+      "sha256": "98d9c82553b790468d3675f74821ced99eb524350ed9b7fd7cc796fdd26f981e"
+    },
+    {
+      "file": "xnu/patches/0028-sweet-ufs-root-device.patch",
+      "sha256": "249f468e5c85bfa53f4005f5c1c669004462d424dd95b612268091a73e13cecc"
+    },
+    {
+      "file": "xnu/patches/0029-sweet-unsealed-root-volume.patch",
+      "sha256": "e76d458b4ee831309759425f10347caff6d6fc7736e024abf0afcea0623c04ac"
+    },
+    {
+      "file": "xnu/patches/0030-sweet-ufs-writes.patch",
+      "sha256": "fb2869176d0fb4cc55d8754aec609015d529696fc783de025368b44834192802"
+    },
+    {
+      "file": "xnu/patches/0031-sweet-read-write-root.patch",
+      "sha256": "949a2ddd2832e39e4e36b3f40888718ec30201142d5d14e79203f0000f79e056"
+    },
+    {
+      "file": "xnu/patches/0032-sweet-bearssl-sha1.patch",
+      "sha256": "611f179956b844d0cc0e2a5d53eb664552420a6804551e1f5f55eb17040a31ed"
+    },
+    {
+      "file": "xnu/patches/0033-sweet-bearssl-sha384-sha512.patch",
+      "sha256": "13641194f854ed7da857394facfd6b5b3339716ced2f90e02836fd9fa689476d"
+    },
+    {
+      "file": "xnu/patches/0034-sweet-ufs-dma-above-4g.patch",
+      "sha256": "e1e76854114d882db815889b3109d27fe63abc839c3ef4bcf235d32ca36eec7f"
+    },
+    {
+      "file": "xnu/patches/0035-sweet-amfi-entitlements-platform-binaries.patch",
+      "sha256": "fa98049cca8a1ac0f77592117897b4dfa9a357606f97a66183525d96c5b3e252"
+    },
+    {
+      "file": "xnu/patches/0036-sweet-amfi-cs-signed.patch",
+      "sha256": "a23593fac4ad8b59160dd8363db5eafd799b19f59378ce01b2d07a9fa02f8904"
+    },
+    {
+      "file": "xnu/patches/0037-sweet-config-bindfs.patch",
+      "sha256": "53159e116791f743cc5f2b7a5ec9ec31c4f308fe44dd62c94417985c9a457e53"
+    },
+    {
+      "file": "xnu/patches/0038-sweet-applekeystore.patch",
+      "sha256": "71ab043a53c00db2814878c85818d83e97ae580ee0b3bde3ddf1dd1e97038087"
+    },
+    {
+      "file": "xnu/patches/0039-sweet-coredump-default-off.patch",
+      "sha256": "6d60ba2732759a8fc1dbe183dbe16a8f05462e861b8008a76a6dcb20a812df8b"
+    },
+    {
+      "file": "xnu/patches/0040-sweet-iowatchdog.patch",
+      "sha256": "c58a94a2ce3acc03e5b60efc1a98a8c8fd723fe139908186396a119248879669"
+    },
+    {
+      "file": "xnu/patches/0041-sweet-hfs-link-notes.patch",
+      "sha256": "ef924399bbef4728daa16cec9421e583aab301d327a480c0b9dcac6ce68b2728"
+    },
+    {
+      "file": "xnu/patches/0042-sweet-short-exec-log.patch",
+      "sha256": "aed20087fb248a87567883dafb7f2e83da8647c1e8ef112299052decb2167fdd"
+    },
+    {
+      "file": "xnu/patches/0043-sweet-console-crash-log.patch",
+      "sha256": "ef83e99baf6ae1b9cc35968d06bb49262c10ea07f51e64bfbb58d50c5a5e58e6"
+    },
+    {
+      "file": "xnu/patches/0044-sweet-crash-log-reason.patch",
+      "sha256": "f1b4085e217de41a9b26824d3bd0c27fec15abb2b016abc98acd7b44249a99b3"
+    },
+    {
+      "file": "xnu/patches/0045-sweet-iowatchdog-pmu-primary.patch",
+      "sha256": "5733977651e593d6a4179b7b16d3d8c14459dff1ae48dc16d1ff718cff0ca4d2"
+    },
+    {
+      "file": "xnu/patches/0046-sweet-iosurface-iomfb.patch",
+      "sha256": "0f23986cf9861ad52a6a0986328fa83c9f0ec222d53dee2bce5921d79c90e5be"
+    },
+    {
+      "file": "xnu/patches/0047-sweet-persistent-console-log.patch",
+      "sha256": "1e73bc5acf4823f5c842ea2b61c70595a2ca764872d13cd2aafbcec8db708017"
+    },
+    {
+      "file": "xnu/patches/0048-sweet-devnull-tee.patch",
+      "sha256": "ced1853fa17a1a542935f7fb549591aeb3a7184dadd18fd8111812a5b3a66d91"
+    },
+    {
+      "file": "xnu/patches/0049-sweet-iokit-trace.patch",
+      "sha256": "c0522c74d30e577707174d0fb3e5bda005ac35f81339d8f1ab4e2a50de413f85"
+    },
+    {
+      "file": "xnu/patches/0050-sweet-sandbox-policy.patch",
+      "sha256": "d2c2036e2a4e2388d442165cd0b85f7bf622f6d249a75e4242fb1994076142bd"
+    },
+    {
+      "file": "xnu/patches/0051-sweet-crash-heap-strings.patch",
+      "sha256": "8b0fc8aaa7f2a76ef6202db233dc6c2134fd163c212393c5838dc238dfdcaec4"
+    },
+    {
+      "file": "xnu/patches/0052-sweet-hfs-rename-swap.patch",
+      "sha256": "5b115a5435a3d8bd28f9b30bf0eb667a36a3454256ee53b806f0a0f09145f6b2"
+    },
+    {
+      "file": "xnu/patches/0053-sweet-crash-scan-springboard.patch",
+      "sha256": "ed1f28e8a578bade8c4d8ae1e25dd510a1cd0b9f9a5e515418a01c80a2704ff1"
+    },
+    {
+      "file": "xnu/patches/0054-sweet-process-sampler.patch",
+      "sha256": "e3ac3a3c5b349f05e9b467588209ac13bf0d2ec6549983796c6cba8fa404430e"
+    },
+    {
+      "file": "xnu/patches/0055-sweet-aks-ext-state-sampler-depth.patch",
+      "sha256": "5555b8045c6ab2b0653725cbf2d361f54d296730e83f8495c1c71e0a6c0fa495"
+    },
+    {
+      "file": "xnu/patches/0056-sweet-fb-throttled-present.patch",
+      "sha256": "36eb518904a3304d9494e9a58e90e9bd72fe6a577e9bf6f647ad6592c882fa97"
+    },
+    {
+      "file": "xnu/patches/0057-sweet-no-ext-resolver.patch",
+      "sha256": "dde36d2d45ee13ee364e7f1e858242d901b828986d6fd3c4157fcfdcd85ff725"
+    },
+    {
+      "file": "xnu/patches/0058-sweet-hid-event-services.patch",
+      "sha256": "9ce7e4b84d0622c6c0153a1d3511f92612e220d2a830049fa428e6ac1625bcc3"
+    },
+    {
+      "file": "xnu/patches/0059-sweet-iphone-identity.patch",
+      "sha256": "59bd94a272d6620d4a402ff09cc96def02f78bd96a10bda0d3cd2e4809a180a0"
+    },
+    {
+      "file": "xnu/patches/0060-sweet-keys-touch-drivers.patch",
+      "sha256": "c77a3393d7ef29e9d5b4ac70dc7d3baa44bc4fa560a25d3f3c20d41a965d4449"
+    },
+    {
+      "file": "xnu/patches/0061-sweet-iphone-x-display-size.patch",
+      "sha256": "d4d795cbb17cc4084f1ce148778a6d908d004a7b41da6f4c0e38353071cca735"
+    },
+    {
+      "file": "xnu/patches/0062-sweet-touch-power-battery.patch",
+      "sha256": "8a4dc08c61545d31bd2c0a70530434824b3e3d6c4bf96e8b63559db31148a617"
+    },
+    {
+      "file": "xnu/patches/0063-sweet-goodix-geni-packing.patch",
+      "sha256": "02fb16494b60d7c8c91dd1fda7c7ee5f5e3088be01a9633205c02b22a0e7eeb3"
+    },
+    {
+      "file": "xnu/patches/0064-sweet-priv-work-interval.patch",
+      "sha256": "ef85defd8cbdb9d444070614865d419e0b028e1ab6b0bb8ce1b8b2da8ede63d6"
+    },
+    {
+      "file": "xnu/patches/0065-sweet-smp-psci.patch",
+      "sha256": "4aad63a0c924ca516f7960c0484b1a4bea6c97ae4581e20fef2cea0cfe489d16"
+    },
+    {
+      "file": "xnu/patches/0066-sweet-crash-fault-region.patch",
+      "sha256": "77fd8f78fbbdc0f934d6f966054f059932de5df7b28f75ebea934a4b7cf46182"
+    },
+    {
+      "file": "xnu/patches/0067-sweet-console-mute.patch",
+      "sha256": "3a5b644a242354c62b73baae3d05a816b982ba9c19836bc7297362813af1c77d"
+    },
+    {
+      "file": "xnu/patches/0068-sweet-surface-lookup-cached.patch",
+      "sha256": "97a5b8a9414761cb9b9d2d666be46ffeb3629faa03185930dbf96a72e0bbf804"
+    },
+    {
+      "file": "xnu/patches/0069-sweet-ufs-faster.patch",
+      "sha256": "d81f1a3da8ad84017e4bf5edb0ed10c0f49159180c0abe5843e417d9391578d3"
+    },
+    {
+      "file": "xnu/patches/0070-sweet-pid-hibernate.patch",
+      "sha256": "ec925678a435aa3146cb3d8b3bfa4121eea53c5251f77db229737b5902c8801b"
+    },
+    {
+      "file": "xnu/patches/0071-sweet-touch-edge.patch",
+      "sha256": "05fa04a2272971f414fe5bccbb7ca75ac4fb3d49bd3c6240990fff0eaff27ccc"
+    },
+    {
+      "file": "xnu/patches/0072-sweet-usb-probe.patch",
+      "sha256": "963aa45557d60610d4d11672ed8f678487253caf196a12a247ebcc8389a5a0b9"
+    },
+    {
+      "file": "xnu/patches/0073-sweet-usb-device-ep0.patch",
+      "sha256": "66ddd7707ab11dd690a3f3a3d38350ab4ac4a8d1b673a7b740710754d3e9c7de"
+    },
+    {
+      "file": "xnu/patches/0074-sweet-usb-vbus-override.patch",
+      "sha256": "e1478db32cb6e19b1e137e38782871935244f29805297d86147b157e7941a20f"
+    },
+    {
+      "file": "xnu/patches/0075-sweet-usb-ecm.patch",
+      "sha256": "16e9a14cff842ef243fb891d3153fcee813b85c8cfb3739f942843e946dcc8e3"
+    },
+    {
+      "file": "xnu/patches/0076-sweet-usb-rx-mbuf.patch",
+      "sha256": "eba80b448ca75c23b2eaf80ec29d094566361c55d4c30e4cdcc3c93d03456e94"
+    },
+    {
+      "file": "xnu/patches/0077-sweet-usb-live-log.patch",
+      "sha256": "c39f6f8178892b2fc87721dc572d044bdb11a048443fbc28aae6f7010f012c9b"
+    },
+    {
+      "file": "xnu/patches/0078-sweet-smp-8-cores.patch",
+      "sha256": "3598dc629f16e5f2abb342a7ecb04b3b8d15b4b2709ac9c8af6db89de30c4f7d"
+    },
+    {
+      "file": "xnu/patches/0079-sweet-display-power.patch",
+      "sha256": "062255631bf678f7c1e14c62895bf60372e209b2153d06e73d931f3456028900"
+    },
+    {
+      "file": "xnu/patches/0080-sweet-net-trace.patch",
+      "sha256": "03a43a3b03fb4c4f87642c007c84fdd3353541a160ae921293e3f7ac9c978b1d"
+    },
+    {
+      "file": "xnu/patches/0081-sweet-usb-link-state.patch",
+      "sha256": "4d6b492d81379b93ae831a34a3972cb6366e0412c981385c32b36ee512c95da9"
+    },
+    {
+      "file": "xnu/patches/0082-fuxi-ram-bringup.patch",
+      "sha256": "7bb2da47612a27ec34d36c354458f41a83bfe4a8211a4c20def32dd7478ae0ad"
+    },
+    {
+      "file": "xnu/patches/0083-fuxi-native-monitor-diagnostics.patch",
+      "sha256": "03d83dd33f1566a22a911d428dc21822fb61fbc9b7e436b7cbbd08a8de12c6d2"
+    },
+    {
+      "file": "xnu/patches/0084-fuxi-readonly-ufs-probe.patch",
+      "sha256": "cf166301a83e4c431297076d6a3e06b50298519e125b83cc5bfd42b6ae59d41e"
+    },
+    {
+      "file": "xnu/patches/0085-fuxi-ufs-sense-diagnostics.patch",
+      "sha256": "56a26b8c773ca2d0d4388508fa1454e9ba70456b5156b1ba89dbb86af011624c"
+    },
+    {
+      "file": "xnu/patches/0086-fuxi-ufs-active-power.patch",
+      "sha256": "192426556c23ace46f8a13ed67caacc8ea4c5104a3305cac19c6cd56407acb69"
+    },
+    {
+      "file": "xnu/patches/0087-fuxi-display-autorefresh.patch",
+      "sha256": "774dcfa7bcdbea58ebba5f317650e106d4a1c6efdae1f3457630bc5e22e7fd5b"
+    },
+    {
+      "file": "xnu/patches/0088-fuxi-extent-root.patch",
+      "sha256": "e75f01d1d2316db8ed9a5dd02150568b0f1c8784438319a1ea351590f746b3d9"
+    },
+    {
+      "file": "xnu/patches/0089-fuxi-stack-sampler.patch",
+      "sha256": "57252c57ef0c76140a06f109f682cdabc9fd8bf0917dfadfb5c366ea67693a95"
+    },
+    {
+      "file": "xnu/patches/0090-fuxi-smp-seven-cores.patch",
+      "sha256": "421495940b474149631d2dd3243b56f48d75f7d96f99204a7ee08f7de71e297b"
+    },
+    {
+      "file": "xnu/patches/0091-fuxi-touch-fts-spi.patch",
+      "sha256": "c1aed138f7d14ac7b58bbe9053530e970aef7a84a62360a6c22bbe0adf11b638"
+    },
+    {
+      "file": "xnu/patches/0092-fuxi-buttons.patch",
+      "sha256": "05ee183d8808cd2302a6fbeb7171454a7233063c841ca2064efe74181f5cbbe3"
+    },
+    {
+      "file": "xnu/patches/0093-fuxi-touch-display-polish.patch",
+      "sha256": "274fd8faf0510130694a64d62cf67a7a2d6ec012918fff4c05df77e34d69b69c"
+    },
+    {
+      "file": "xnu/patches/0095-sweet-noexec-bootarg.patch",
+      "sha256": "6271f24bef2c17e8c8f95d112d558626edc2293280991df062da8f298b69e731"
+    },
+    {
+      "file": "xnu/patches/0096-fuxi-adreno.patch",
+      "sha256": "92e66704d35ee668ed064df64f3aadc792342fa880d8b317501cc6af0b61c5a8"
+    },
+    {
+      "file": "xnu/patches/0097-fuxi-touch-boost.patch",
+      "sha256": "eb11d3664185b41fd13a546bde6a897a3f331f661ac9544f411b65b41a16bdb6"
+    },
+    {
+      "file": "xnu/patches/0098-fuxi-native-adreno-abi.patch",
+      "sha256": "e547f382142fb43a02aa3ae1c84f11d02b395fe7b867eb17ec2a49928a87dfcd"
+    },
+    {
+      "file": "xnu/patches/0099-fuxi-wlan.patch",
+      "sha256": "153bcd6c71fc2b06f58f12bf46bd1941d39835630708e880b6e3d1a47c5adfa2"
+    },
+    {
+      "file": "xnu/patches/0100-sweet-execswap-gpu-abi-trace.patch",
+      "sha256": "f636a195ae61ebb22997fa652fade29fad26c470343b8e869526d2be6ba9c526"
+    },
+    {
+      "file": "xnu/patches/0101-fuxi-gpu-nc-cache-sync.patch",
+      "sha256": "c2c745fb6190c11688442676d5b5342d42b1f104f1235f15196dbfdc2404a538"
+    },
+    {
+      "file": "xnu/patches/0102-fuxi-gpu-backboardd-open.patch",
+      "sha256": "b4e9f0ecbbe5497e16555ab63b679f3fba63351b6e0dc77a830d8fce0cf6d852"
+    },
+    {
+      "file": "xnu/patches/0103-fuxi-kernel-h1.patch",
+      "sha256": "545b4bedb8e1c873bd8ba05c33a8ab3d3e7165bc8a77cffa3b15e8dabf5e1666"
+    },
+    {
+      "file": "xnu/patches/0104-fuxi-wifi-ios.patch",
+      "sha256": "16d3a150104ec858b205b2b51d9f056755f7e4f1ff26c33e7430c0854d871abe"
+    },
+    {
+      "file": "xnu/patches/0105-fuxi-idle.patch",
+      "sha256": "7959ddc9885634c20f33f44fb6e76e82f0a24e754f4fdd35c0baa512f056c1c8"
+    },
+    {
+      "file": "xnu/patches/0106-fuxi-unixnu.patch",
+      "sha256": "6a500b391eb6e892fc2ab369e36916ccd70ab35abb28086a2bf5219a6ce94bb3"
+    },
+    {
+      "file": "xnu/patches/0107-fuxi-sys.patch",
+      "sha256": "e517b50c3da350b864284b00b9a0bf015e7f8b15890bec44164927cdc3a72849"
+    },
+    {
+      "file": "xnu/patches/0108-fuxi-gpu-scanout.patch",
+      "sha256": "f68c7f77484d50954ebc2af374760ff6c51ff217fcb4ae669e5d6b57482b783e"
+    },
+    {
+      "file": "xnu/patches/0109-fuxi-backlight.patch",
+      "sha256": "79e84ef824dcc1f16824cede68b31ad2db82a526da4b5ac34cc77e7ce7f462aa"
+    },
+    {
+      "file": "xnu/patches/0110-fuxi-union-lower-directory.patch",
+      "sha256": "e9ff6cb69bf2abb7ddcd86a6fd9714beba7177093b59d91f22dcaae5c5f761e8"
+    }
+  ],
+  "target": "kernel-metal4",
+  "xcode": "15.4",
+  "ci_dispatched": false
+}
