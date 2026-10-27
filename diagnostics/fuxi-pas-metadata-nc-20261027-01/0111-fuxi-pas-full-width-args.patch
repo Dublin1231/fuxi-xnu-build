@@ -1,0 +1,11 @@
+--- a/bsd/dev/fuxi_adreno.c
++++ b/bsd/dev/fuxi_adreno.c
+@@ -281,6 +281,8 @@
+  for (unsigned attempt = 0; attempt < 2; attempt++) {
+   printf("FUXI GPU: PAS step %u fn %#x attempt %u (enter CPU0 bound)\n",
+       step, fn, attempt+1);
++  printf("FUXI GPU: PAS args slot=%u step=%u fn=%#x info=%#x a=%#llx b=%#llx c=%#llx\n",
++      slot, step, fn, info, (unsigned long long)a, (unsigned long long)b, (unsigned long long)c);
+   boolean_t interrupts = ml_set_interrupts_enabled(FALSE);
+   unsigned cpu = ml_get_cpu_number_local();
+   if (cpu == 0) g5_smc_raw(ret, fn, info, a, b, c);
