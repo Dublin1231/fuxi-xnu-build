@@ -452,7 +452,7 @@
     },
     {
       "file": "0112-fuxi-pas-metadata-normal-nc.patch",
-      "sha256": "bc15ca9510a4aa953c18a01348e364dc32c16779c1e7c8c85c58f05cbf31f241"
+      "sha256": "c753df5f6e5bd75d4d7665285a862a25c72a8df1ae55949871bbe88a09a45ae7"
     }
   ],
   "purpose": "Offline prepared Normal-NC metadata-only mapping control; no GPU success claim"
